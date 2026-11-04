@@ -20,11 +20,6 @@ export default [
       globals: {
         ...globals.node,
         ...globals.es2021,
-
-        // Pipedream globals
-        defineComponent: 'readonly',
-        steps: 'readonly',
-        $: 'readonly',
       },
     },
     plugins: {
