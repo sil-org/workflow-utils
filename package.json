@@ -8,6 +8,7 @@
   "files": [
     "index.d.ts",
     "utils",
+    "!utils/*.test.d.ts",
     "!utils/*.test.js"
   ],
   "scripts": {
