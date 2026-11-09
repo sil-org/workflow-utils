@@ -23,7 +23,8 @@
     "url": "git+https://github.com/sil-org/workflow-utils.git"
   },
   "keywords": [
-    "workflow"
+    "workflow",
+    "kestra"
   ],
   "author": "SIL Global",
   "license": "MIT",
