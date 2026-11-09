@@ -14,8 +14,6 @@ jobs:
     timeout-minutes: ${{ fromJSON(vars.DEFAULT_JOB_TIMEOUT_MINUTES) }}
     steps:
       - uses: actions/checkout@v6
-        with:
-          ref: main
 
       - uses: actions/setup-node@v6
         with:
