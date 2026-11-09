@@ -1,5 +1,6 @@
 {
   "sandbox": {
+    "enabled": true,
     "filesystem": {
       "allowRead": ["."],
       "denyRead": ["./.env"]
