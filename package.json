@@ -1,7 +1,7 @@
 {
   "name": "@sil-org/workflow-utils",
   "type": "module",
-  "version": "0.4.4",
+  "version": "1.0.0",
   "description": "Utilities to be used in workflows (e.g. on Kestra) as NPM dependencies",
   "main": "index.js",
   "types": "index.d.ts",
