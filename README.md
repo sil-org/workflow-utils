@@ -1,6 +1,6 @@
-# Pipedream Utilities
+# Workflow Utilities
 
-This repository contains a collection of utilities that can be used as NPM dependencies in Pipedream (or any Javascript module). This allows you to re-use code without calling another workflow or adding a step.
+This repository contains a collection of utilities that can be used as NPM dependencies in workflow scripts (for example, Node.js scripts in Kestra flows) or in any JavaScript module. This allows you to re-use code without calling another workflow or adding a step.
 
 ## Utilities
 
@@ -21,16 +21,15 @@ The following categories of utilities are available under /utils:
 
 ## Import Example
 
-To use these utilities, install via NPM (optional for Pipedream) in your local environment:
+To use these utilities, install them via NPM wherever your script runs:
 
 ```bash
-
-npm install @sil-org/pipedream-utils
+npm install @sil-org/workflow-utils
 ```
 
-or in Pipedream just import the category/ies of functions you want.
+then import the category/ies of functions you want:
 
-`import { helpers, netsuite } from '@sil-org/pipedream-utils@^0.4.3'`
+`import { helpers, netsuite } from '@sil-org/workflow-utils'`
 
 ## Tests
 

@@ -1,8 +1,8 @@
 {
-  "name": "@sil-org/pipedream-utils",
+  "name": "@sil-org/workflow-utils",
   "type": "module",
-  "version": "0.4.4",
-  "description": "Utilities to be used in Pipedream as NPM dependencies",
+  "version": "1.0.0",
+  "description": "Utilities to be used in workflows (e.g. on Kestra) as NPM dependencies",
   "main": "index.js",
   "types": "index.d.ts",
   "files": [
@@ -20,17 +20,18 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/sil-org/pipedream-utils.git"
+    "url": "git+https://github.com/sil-org/workflow-utils.git"
   },
   "keywords": [
-    "pipedream"
+    "workflow",
+    "kestra"
   ],
   "author": "SIL Global",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/sil-org/pipedream-utils/issues"
+    "url": "https://github.com/sil-org/workflow-utils/issues"
   },
-  "homepage": "https://github.com/sil-org/pipedream-utils#readme",
+  "homepage": "https://github.com/sil-org/workflow-utils#readme",
   "dependencies": {
     "netsuite-api-client": "^1.0.3",
     "ssh2-sftp-client": "^12.1.1"
