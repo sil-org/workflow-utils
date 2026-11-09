@@ -23,7 +23,7 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
           cache: npm
 
-      - run: npm ci
+      - run: npm ci --ignore-scripts
 
       - name: Check formatting
         run: npm run format-check
@@ -59,7 +59,7 @@ jobs:
           always-auth: true
           cache: npm
 
-      - run: npm ci
+      - run: npm ci --ignore-scripts
 
       - name: Publish
         run: npm publish --provenance --access public
