@@ -5,7 +5,6 @@ on:
       - '*.*.*'
 
 permissions:
-  id-token: write # Required for OIDC https://docs.npmjs.com/trusted-publishers
   contents: read
 
 jobs:
@@ -15,16 +14,14 @@ jobs:
     timeout-minutes: ${{ fromJSON(vars.DEFAULT_JOB_TIMEOUT_MINUTES) }}
     steps:
       - uses: actions/checkout@v6
-        with:
-          ref: main
 
       - uses: actions/setup-node@v6
         with:
-          node-version: '22'
+          node-version: '24'
           registry-url: 'https://registry.npmjs.org'
           cache: npm
 
-      - run: npm ci
+      - run: npm ci --ignore-scripts
 
       - name: Check formatting
         run: npm run format-check
@@ -47,18 +44,20 @@ jobs:
     runs-on: ubuntu-latest
     if: github.actor != 'dependabot[bot]'
     timeout-minutes: ${{ fromJSON(vars.DEFAULT_JOB_TIMEOUT_MINUTES) }}
+    permissions:
+      id-token: write # Required for OIDC https://docs.npmjs.com/trusted-publishers
+      contents: read
     steps:
       - uses: actions/checkout@v6
 
       - uses: actions/setup-node@v6
         with:
-          node-version: 22
+          node-version: 24
           registry-url: 'https://registry.npmjs.org/'
           always-auth: true
           cache: npm
 
-      - run: npm ci
+      - run: npm ci --ignore-scripts
 
-      # Ensure npm 11.5.1 or later is installed
       - name: Publish
-        run: npx --yes npm@latest publish --provenance --access public
+        run: npm publish --provenance --access public
