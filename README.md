@@ -6,9 +6,12 @@ This repository contains a collection of utilities that can be used as NPM depen
 
 The following categories of utilities are available under /utils:
 
-- `helpers`: Miscellaneous utilities, such as string normalization and date manipulation.
+- `helpers`: Miscellaneous utilities, such as string normalization, date manipulation, and reading environment variables
+  and secrets.
   - lastDay
   - normalizeString
+  - parseJsonSecret
+  - requireEnv
   - startsWith
 - `netsuite`: NetSuite REST & SuiteQL helpers, including functions to execute SuiteQL queries.
   - getRecordPath

@@ -17,3 +17,5 @@ export function normalizeString(v: string | undefined): string;
  * @returns {boolean}
  */
 export function startsWith(val: string, prefix: string): boolean;
+export function parseJsonSecret(env: Record<string, string | undefined>, name: string): any;
+export function requireEnv(env: Record<string, string | undefined>, name: string): string;
