@@ -103,11 +103,11 @@ export function calculateUniqueRunID(givenRunID: string, existingRunIDs: string[
  *   (get from the URL, between `/d/` and `/edit`)
  * @param {{ client_email: string, private_key: string }} options.serviceAccountKey -
  *   The Google Service Account Key, parsed from its JSON once at startup
- * @param {string} [options.executionId] - The Dispatcher's Kestra execution ID, used for
- *   calculating a Run ID when adding a new row
+ * @param {string} [options.eventId] - The ID of the dispatching flow's run or triggering event (such as a Kestra
+ *   execution ID), used for calculating a Run ID when adding a new row
  * @returns {Promise<MetricUpdateResult>}
  */
-export function updateMetricInGoogleSheet({ sourceFileName, runID, wasDryRun, recordType, numberOfItems, googleSheetId, serviceAccountKey, executionId, }: {
+export function updateMetricInGoogleSheet({ sourceFileName, runID, wasDryRun, recordType, numberOfItems, googleSheetId, serviceAccountKey, eventId, }: {
     sourceFileName: string;
     runID: string;
     wasDryRun: boolean;
@@ -118,7 +118,7 @@ export function updateMetricInGoogleSheet({ sourceFileName, runID, wasDryRun, re
         client_email: string;
         private_key: string;
     };
-    executionId?: string;
+    eventId?: string;
 }): Promise<MetricUpdateResult>;
 /**
  * Update the metric in any spreadsheet. Code should call updateMetricInGoogleSheet;
