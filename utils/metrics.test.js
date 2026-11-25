@@ -13,11 +13,7 @@ try {
   }
 }
 
-const {
-  default: component,
-  updateMetric,
-  calculateUniqueRunID,
-} = await import('./update_metric_in_google_sheet.js')
+const { default: component, updateMetric, calculateUniqueRunID } = await import('./update_metric_in_google_sheet.js')
 
 /**
  * Mock spreadsheet adapter
@@ -27,45 +23,45 @@ const {
  * @implements {SpreadsheetInterface}
  */
 function MockSpreadsheet(initialData = [[]]) {
-  this.data = initialData; // 2D array: this.data[row][col]
+  this.data = initialData // 2D array: this.data[row][col]
 
   this.appendRow = async (cellValues) => {
-    this.data.push(cellValues);
+    this.data.push(cellValues)
   }
 
   this.getCell = async (cellIdentifier) => {
     // Basic 'A1' notation parser for the mock
-    const col = cellIdentifier.match(/[A-Z]+/)[0].charCodeAt(0) - 65;
-    const row = parseInt(cellIdentifier.match(/\d+/)[0]) - 1;
-    return (this.data[row] && this.data[row][col]) || '';
+    const col = cellIdentifier.match(/[A-Z]+/)[0].charCodeAt(0) - 65
+    const row = parseInt(cellIdentifier.match(/\d+/)[0]) - 1
+    return (this.data[row] && this.data[row][col]) || ''
   }
 
   this.getColumn = async (columnLetter) => {
-    const colIndex = columnLetter.charCodeAt(0) - 65;
-    return this.data.map(row => [row[colIndex]]);
+    const colIndex = columnLetter.charCodeAt(0) - 65
+    return this.data.map((row) => [row[colIndex]])
   }
 
   this.getRanges = async (ranges) => {
-    return ranges.map(range => {
-      if (range === '1:1') return [this.data[0]];
-      if (range === 'B:C') return this.data.map(row => [row[1], row[2]]);
-      return [];
-    });
+    return ranges.map((range) => {
+      if (range === '1:1') return [this.data[0]]
+      if (range === 'B:C') return this.data.map((row) => [row[1], row[2]])
+      return []
+    })
   }
 
   this.update = async (range, values) => {
     if (range === '1:1') {
-      this.data[0] = values[0];
+      this.data[0] = values[0]
     } else {
-      const col = range.match(/[A-Z]+/)[0].charCodeAt(0) - 65;
-      const row = parseInt(range.match(/\d+/)[0]) - 1;
+      const col = range.match(/[A-Z]+/)[0].charCodeAt(0) - 65
+      const row = parseInt(range.match(/\d+/)[0]) - 1
       if (!this.data[row]) {
         // Fill rows if they don't exist
         for (let i = this.data.length; i <= row; i++) {
-          this.data[i] = [];
+          this.data[i] = []
         }
       }
-      this.data[row][col] = values[0][0];
+      this.data[row][col] = values[0][0]
     }
   }
 }
@@ -76,22 +72,15 @@ describe(component.name, () => {
       const recordType = 'New Metric'
       const mockSheet = new MockSpreadsheet([
         ['Date', 'File Name', 'Run ID', 'Dry Run'], // Headers
-        ['2026-05-20', 'test.csv', 'abcd1234', 'No'] // Existing Row
-      ]);
+        ['2026-05-20', 'test.csv', 'abcd1234', 'No'], // Existing Row
+      ])
 
-      const response = await updateMetric(
-        'test.csv',
-        'abcd1234',
-        false,
-        recordType,
-        1,
-        mockSheet
-      );
+      const response = await updateMetric('test.csv', 'abcd1234', false, recordType, 1, mockSheet)
 
       assert.equal(response.error, undefined)
       assert.ok(
-        String(response.warnings?.join("\n")).includes('No column found for'),
-        'Expected a warning that no column was found for that record type'
+        String(response.warnings?.join('\n')).includes('No column found for'),
+        'Expected a warning that no column was found for that record type',
       )
       assert.ok(response.insertedNewColumn)
       assert.equal(response.newCount, 1)
@@ -107,68 +96,41 @@ describe(component.name, () => {
         false,
         'ICJEs',
         1,
-        mockSheet
+        mockSheet,
       )
 
-      assert.ok(
-        String(response.error).includes('Run ID'),
-        'Expected an error about the Run ID'
-      )
+      assert.ok(String(response.error).includes('Run ID'), 'Expected an error about the Run ID')
     })
 
     it('should report an error if given a Record Type when generating a new row', async () => {
       const mockSheet = new MockSpreadsheet()
-      const response = await updateMetric(
-        'test.csv',
-        'NEW',
-        false,
-        'ICJE Lines',
-        1,
-        mockSheet
-      )
+      const response = await updateMetric('test.csv', 'NEW', false, 'ICJE Lines', 1, mockSheet)
 
       const errorMessage = String(response.error)
       assert.ok(
         errorMessage.includes('Record Type') && errorMessage.includes('new'),
-        'Expected an error about providing a Record Type when generating a new Run ID'
+        'Expected an error about providing a Record Type when generating a new Run ID',
       )
     })
 
     it('should return an error if no row has the given File Name and Run ID', async () => {
       const mockSheet = new MockSpreadsheet([
         ['Date', 'File Name', 'Run ID', 'Dry Run', 'ICJE Lines'],
-        ['2026-05-20', 'test.csv', 'abcd1234', 'No', '']
+        ['2026-05-20', 'test.csv', 'abcd1234', 'No', ''],
       ])
-      const response = await updateMetric(
-        'test.csv',
-        'zzzzzzzz',
-        false,
-        'ICJE Lines',
-        1,
-        mockSheet
-      )
+      const response = await updateMetric('test.csv', 'zzzzzzzz', false, 'ICJE Lines', 1, mockSheet)
 
       assert.ok(
         String(response.error).includes('No row found for'),
-        'Expected an error that no row was found for that run id'
+        'Expected an error that no row was found for that run id',
       )
     })
 
     it('should add a row (and use the Event ID as the actual Run ID) if given a Run ID of "NEW"', async () => {
-      const mockSheet = new MockSpreadsheet([
-        ['Date', 'File Name', 'Run ID', 'Dry Run']
-      ])
+      const mockSheet = new MockSpreadsheet([['Date', 'File Name', 'Run ID', 'Dry Run']])
       const exampleEventId = randomUUID()
 
-      const response = await updateMetric(
-        'test.csv',
-        'NEW',
-        false,
-        '',
-        1,
-        mockSheet,
-        exampleEventId
-      )
+      const response = await updateMetric('test.csv', 'NEW', false, '', 1, mockSheet, exampleEventId)
 
       assert.equal(response.error, undefined)
       assert.ok(response.insertedNewRow)
@@ -181,20 +143,10 @@ describe(component.name, () => {
     })
 
     it('should indicate that it was a dry run (when adding a new row during a dry run)', async () => {
-      const mockSheet = new MockSpreadsheet([
-        ['Date', 'File Name', 'Run ID', 'Dry Run']
-      ])
+      const mockSheet = new MockSpreadsheet([['Date', 'File Name', 'Run ID', 'Dry Run']])
       const exampleEventId = randomUUID()
 
-      const response = await updateMetric(
-        'test.csv',
-        'NEW',
-        true,
-        '',
-        1,
-        mockSheet,
-        exampleEventId
-      )
+      const response = await updateMetric('test.csv', 'NEW', true, '', 1, mockSheet, exampleEventId)
 
       assert.equal(response.error, undefined)
       assert.ok(response.insertedNewRow)
@@ -203,20 +155,10 @@ describe(component.name, () => {
     })
 
     it('should indicate that it was not a dry run (when adding a new row during a non-dry-run)', async () => {
-      const mockSheet = new MockSpreadsheet([
-        ['Date', 'File Name', 'Run ID', 'Dry Run']
-      ])
+      const mockSheet = new MockSpreadsheet([['Date', 'File Name', 'Run ID', 'Dry Run']])
       const exampleEventId = randomUUID()
 
-      const response = await updateMetric(
-        'test.csv',
-        'NEW',
-        false,
-        '',
-        1,
-        mockSheet,
-        exampleEventId
-      )
+      const response = await updateMetric('test.csv', 'NEW', false, '', 1, mockSheet, exampleEventId)
 
       assert.equal(response.error, undefined)
       assert.ok(response.insertedNewRow)
@@ -228,18 +170,10 @@ describe(component.name, () => {
       const existingEventId = 'abcd1234'
       const mockSheet = new MockSpreadsheet([
         ['Date', 'File Name', 'Run ID', 'Dry Run'],
-        ['2026-05-20', 'test.csv', existingEventId, 'No']
+        ['2026-05-20', 'test.csv', existingEventId, 'No'],
       ])
 
-      const response = await updateMetric(
-        'test.csv',
-        'NEW',
-        false,
-        '',
-        1,
-        mockSheet,
-        existingEventId
-      )
+      const response = await updateMetric('test.csv', 'NEW', false, '', 1, mockSheet, existingEventId)
 
       assert.equal(response.error, undefined)
       assert.ok(response.insertedNewRow)
@@ -253,17 +187,10 @@ describe(component.name, () => {
     it('should update the existing row if one matches the File Name and Run ID', async () => {
       const mockSheet = new MockSpreadsheet([
         ['Date', 'File Name', 'Run ID', 'Dry Run', 'ICJE Lines'],
-        ['2026-05-20', 'test.csv', 'abcd1234', 'No', '5']
+        ['2026-05-20', 'test.csv', 'abcd1234', 'No', '5'],
       ])
 
-      const response = await updateMetric(
-        'test.csv',
-        'abcd1234',
-        false,
-        'ICJE Lines',
-        1,
-        mockSheet
-      )
+      const response = await updateMetric('test.csv', 'abcd1234', false, 'ICJE Lines', 1, mockSheet)
 
       assert.equal(response.error, undefined)
       assert.equal(response.insertedNewRow, false)
@@ -276,17 +203,10 @@ describe(component.name, () => {
     it('should update by the specified amount', async () => {
       const mockSheet = new MockSpreadsheet([
         ['Date', 'File Name', 'Run ID', 'Dry Run', 'Invoice Lines'],
-        ['2026-05-20', 'test.csv', 'abcd1234', 'No', '10']
+        ['2026-05-20', 'test.csv', 'abcd1234', 'No', '10'],
       ])
 
-      const response = await updateMetric(
-        'test.csv',
-        'abcd1234',
-        false,
-        'Invoice Lines',
-        3,
-        mockSheet
-      )
+      const response = await updateMetric('test.csv', 'abcd1234', false, 'Invoice Lines', 3, mockSheet)
 
       assert.equal(response.error, undefined)
       assert.equal(response.insertedNewRow, false)

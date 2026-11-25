@@ -1,60 +1,64 @@
 import { google } from 'googleapis@^172.0.0'
 
 export default {
-  name: "Update Metric (Google Sheet)",
-  description: "Add a new row OR increment the counter for how many records of a given type were processed, in a Google Sheet",
-  key: "update_metric_in_google_sheet",
-  version: "2.0.5",
-  type: "action",
+  name: 'Update Metric (Google Sheet)',
+  description:
+    'Add a new row OR increment the counter for how many records of a given type were processed, in a Google Sheet',
+  key: 'update_metric_in_google_sheet',
+  version: '2.0.5',
+  type: 'action',
 
   props: {
     source_file_name: {
-      type: "string",
-      label: "File Name",
-      description: "The name of the file being processed"
+      type: 'string',
+      label: 'File Name',
+      description: 'The name of the file being processed',
     },
     run_id: {
-      type: "string",
-      label: "Run ID",
-      description: "The unique ID for this run (to prevent double-counting when the same file is processed more than once). The Dispatcher should set this to 'NEW' (to add a row with a new Run ID). Sub-workflows should provide the value given them by the Dispatcher."
+      type: 'string',
+      label: 'Run ID',
+      description:
+        "The unique ID for this run (to prevent double-counting when the same file is processed more than once). The Dispatcher should set this to 'NEW' (to add a row with a new Run ID). Sub-workflows should provide the value given them by the Dispatcher.",
     },
     was_dry_run: {
-      type: "boolean",
-      label: "Was a Dry Run?",
-      description: "Whether this was a dry run (for recording when adding a new row). Example: `{{steps.Is_Dry_Run.$return_value}}`",
+      type: 'boolean',
+      label: 'Was a Dry Run?',
+      description:
+        'Whether this was a dry run (for recording when adding a new row). Example: `{{steps.Is_Dry_Run.$return_value}}`',
     },
     record_type: {
-      type: "string",
-      label: "Record Type",
+      type: 'string',
+      label: 'Record Type',
       description: "The type of the record being processed. Do not provide when Run ID is 'NEW'.",
       optional: true,
       default: '',
     },
     number_of_items: {
-      type: "integer",
-      label: "Number of Items",
-      description: "How many items there were (i.e. how much to increment the recorded metrics by)",
+      type: 'integer',
+      label: 'Number of Items',
+      description: 'How many items there were (i.e. how much to increment the recorded metrics by)',
       optional: true,
       default: 1,
     },
     google_sheet_id: {
-      type: "string",
-      label: "Google Sheet ID",
-      description: "The ID of the Google Sheet for the metrics (get from the URL, between `/d/` and `/edit`)"
+      type: 'string',
+      label: 'Google Sheet ID',
+      description: 'The ID of the Google Sheet for the metrics (get from the URL, between `/d/` and `/edit`)',
     },
     google_service_account_key: {
-      type: "string",
-      label: "Google Service Account Key",
-      description: "The JSON string of the Google Service Account Key",
+      type: 'string',
+      label: 'Google Service Account Key',
+      description: 'The JSON string of the Google Service Account Key',
       secret: true,
     },
     event_id: {
-      type: "string",
-      label: "Event ID",
-      description: "The Event ID, used for calculating a Run ID when adding a new row. Example: `{{steps.trigger.event.id}}`",
+      type: 'string',
+      label: 'Event ID',
+      description:
+        'The Event ID, used for calculating a Run ID when adding a new row. Example: `{{steps.trigger.event.id}}`',
       optional: true,
-      default: "",
-    }
+      default: '',
+    },
   },
   async run() {
     try {
@@ -140,8 +144,8 @@ function GoogleSheet(serviceAccountKeyJson, googleSheetId) {
       range: 'A1',
       valueInputOption: 'USER_ENTERED',
       resource: {
-        values: [cellValues]
-      }
+        values: [cellValues],
+      },
     })
   }
 
@@ -158,7 +162,7 @@ function GoogleSheet(serviceAccountKeyJson, googleSheetId) {
       spreadsheetId: googleSheetId,
       ranges: ranges,
     })
-    return response.data.valueRanges.map(valueRange => valueRange.values)
+    return response.data.valueRanges.map((valueRange) => valueRange.values)
   }
 
   this.update = async (range, values) => {
@@ -168,7 +172,7 @@ function GoogleSheet(serviceAccountKeyJson, googleSheetId) {
       valueInputOption: 'USER_ENTERED',
       resource: {
         values: values,
-      }
+      },
     })
   }
 
@@ -228,22 +232,14 @@ const getColumnLetter = (index) => {
  * @param {string} eventId
  * @return {Promise<Object>}
  */
-const updateMetric = async (
-  sourceFileName,
-  runID,
-  wasDryRun,
-  recordType,
-  numberOfItems,
-  spreadsheet,
-  eventId
-) => {
+const updateMetric = async (sourceFileName, runID, wasDryRun, recordType, numberOfItems, spreadsheet, eventId) => {
   if (!runID) {
     return { error: 'No Run ID was provided' }
   }
 
   if (runID === 'NEW') {
     if (recordType) {
-      return {error: 'Do not provide a Record Type when generating a new Run ID'}
+      return { error: 'Do not provide a Record Type when generating a new Run ID' }
     }
   } else {
     if (!recordType) {
@@ -264,23 +260,18 @@ const updateMetric = async (
     }
 
     const existingRunIdRows = await spreadsheet.getColumn('C')
-    const existingRunIDs = existingRunIdRows.map(row => row[0])
+    const existingRunIDs = existingRunIdRows.map((row) => row[0])
 
     runID = calculateUniqueRunID(eventId, existingRunIDs)
-    const jobRunDateTime = new Date().toLocaleString("en-US", { timeZone: "America/Los_Angeles" })
-    const values = [
-      jobRunDateTime,
-      sourceFileName,
-      runID,
-      dryRun,
-    ]
+    const jobRunDateTime = new Date().toLocaleString('en-US', { timeZone: 'America/Los_Angeles' })
+    const values = [jobRunDateTime, sourceFileName, runID, dryRun]
     await spreadsheet.appendRow(values)
     insertedNewRow = true
   } else {
     const batchedValues = await spreadsheet.getRanges(['B:C', '1:1'])
     const fileNamesAndRunIDs = batchedValues[0] || []
 
-    let rowToUpdateIndex = fileNamesAndRunIDs.findIndex(row => row[0] === sourceFileName && row[1] === runID)
+    let rowToUpdateIndex = fileNamesAndRunIDs.findIndex((row) => row[0] === sourceFileName && row[1] === runID)
     if (rowToUpdateIndex === -1) {
       return { error: `No row found for File Name: ${sourceFileName} and Run ID: ${runID}` }
     }
@@ -298,7 +289,7 @@ const updateMetric = async (
     const rowNumber = rowToUpdateIndex + 1 // Row indexes start at 0. Row numbers start at 1.
     const columnLetterForRecordType = getColumnLetter(colIndexForRecordType)
     const cellIdentifier = `${columnLetterForRecordType}${rowNumber}`
-    
+
     const previousCellValue = await spreadsheet.getCell(cellIdentifier)
     previousCount = parseInt(previousCellValue || 0)
     newCount = previousCount + numberOfItems
@@ -316,7 +307,4 @@ const updateMetric = async (
   }
 }
 
-export {
-  calculateUniqueRunID,
-  updateMetric,
-}
+export { calculateUniqueRunID, updateMetric }
