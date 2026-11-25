@@ -1,149 +1,100 @@
-import { google } from 'googleapis@^172.0.0'
+// @ts-check
+import { auth, sheets as googleSheets } from '@googleapis/sheets'
 
-export default {
-  name: 'Update Metric (Google Sheet)',
-  description:
-    'Add a new row OR increment the counter for how many records of a given type were processed, in a Google Sheet',
-  key: 'update_metric_in_google_sheet',
-  version: '2.0.5',
-  type: 'action',
+/**
+ * Add a new row OR increment the counter for how many records of a given type were
+ * processed, in a Google Sheet. Returns any error as `{ error, stackTrace }` instead
+ * of throwing it.
+ *
+ * @param {object} options
+ * @param {string} options.sourceFileName - The name of the file being processed
+ * @param {string} options.runID - The unique ID for this run (to prevent
+ *   double-counting when the same file is processed more than once). The Dispatcher
+ *   should set this to 'NEW' (to add a row with a new Run ID). Sub-workflows should
+ *   provide the value given them by the Dispatcher.
+ * @param {boolean} options.wasDryRun - Whether this was a dry run (for recording when
+ *   adding a new row)
+ * @param {string} [options.recordType] - The type of the record being processed. Do
+ *   not provide when Run ID is 'NEW'.
+ * @param {number} [options.numberOfItems] - How many items there were (i.e. how much
+ *   to increment the recorded metrics by). Defaults to 1.
+ * @param {string} options.googleSheetId - The ID of the Google Sheet for the metrics
+ *   (get from the URL, between `/d/` and `/edit`)
+ * @param {{ client_email: string, private_key: string }} options.serviceAccountKey -
+ *   The Google Service Account Key, parsed from its JSON once at startup
+ * @param {string} [options.executionId] - The Dispatcher's Kestra execution ID, used for
+ *   calculating a Run ID when adding a new row
+ * @returns {Promise<object>}
+ */
+const updateMetricInGoogleSheet = async ({
+  sourceFileName,
+  runID,
+  wasDryRun,
+  recordType = '',
+  numberOfItems = 1,
+  googleSheetId,
+  serviceAccountKey,
+  executionId = '',
+}) => {
+  try {
+    const googleSheet = new GoogleSheet(serviceAccountKey, googleSheetId)
 
-  props: {
-    source_file_name: {
-      type: 'string',
-      label: 'File Name',
-      description: 'The name of the file being processed',
-    },
-    run_id: {
-      type: 'string',
-      label: 'Run ID',
-      description:
-        "The unique ID for this run (to prevent double-counting when the same file is processed more than once). The Dispatcher should set this to 'NEW' (to add a row with a new Run ID). Sub-workflows should provide the value given them by the Dispatcher.",
-    },
-    was_dry_run: {
-      type: 'boolean',
-      label: 'Was a Dry Run?',
-      description:
-        'Whether this was a dry run (for recording when adding a new row). Example: `{{steps.Is_Dry_Run.$return_value}}`',
-    },
-    record_type: {
-      type: 'string',
-      label: 'Record Type',
-      description: "The type of the record being processed. Do not provide when Run ID is 'NEW'.",
-      optional: true,
-      default: '',
-    },
-    number_of_items: {
-      type: 'integer',
-      label: 'Number of Items',
-      description: 'How many items there were (i.e. how much to increment the recorded metrics by)',
-      optional: true,
-      default: 1,
-    },
-    google_sheet_id: {
-      type: 'string',
-      label: 'Google Sheet ID',
-      description: 'The ID of the Google Sheet for the metrics (get from the URL, between `/d/` and `/edit`)',
-    },
-    google_service_account_key: {
-      type: 'string',
-      label: 'Google Service Account Key',
-      description: 'The JSON string of the Google Service Account Key',
-      secret: true,
-    },
-    event_id: {
-      type: 'string',
-      label: 'Event ID',
-      description:
-        'The Event ID, used for calculating a Run ID when adding a new row. Example: `{{steps.trigger.event.id}}`',
-      optional: true,
-      default: '',
-    },
-  },
-  async run() {
-    try {
-      const googleSheet = new GoogleSheet(this.google_service_account_key, this.google_sheet_id)
-
-      return await updateMetric(
-        this.source_file_name,
-        this.run_id,
-        this.was_dry_run,
-        this.record_type,
-        this.number_of_items,
-        googleSheet,
-        this.event_id,
-      )
-    } catch (error) {
-      return {
-        error: error.message || error,
-        stackTrace: error.stack,
-      }
+    return await updateMetricInSpreadsheet(
+      sourceFileName,
+      runID,
+      wasDryRun,
+      recordType,
+      numberOfItems,
+      googleSheet,
+      executionId,
+    )
+  } catch (error) {
+    return {
+      error: error.message || error,
+      stackTrace: error.stack,
     }
-  },
+  }
 }
 
 /**
  * Interface for interacting with spreadsheets
- * @interface SpreadsheetInterface
- */
-
-/**
- * @function
- * @name SpreadsheetInterface#appendRow
- * @param {Array<(string|number|boolean|null)>} cellValues
- * @returns {Promise}
- */
-
-/**
- * @function
- * @name SpreadsheetInterface#getCell
- * @param {string} cellIdentifier -- Example: `'A1'`
- * @returns {Promise<any>} -- The value of that cell (often as a string)
- */
-
-/**
- * @function
- * @name SpreadsheetInterface#getColumn
- * @param {string} columnLetter
- * @returns {Promise<Array<Array>>} -- An array (column) of arrays (cell values in that row)
- */
-
-/**
- * @function
- * @name SpreadsheetInterface#getRanges
- * @param {Array<string>} ranges -- Example: `['B:C', '1:1']`
- * @returns {Promise<Array<Array<Array>>>} -- A list of the results for each range, in the order specified in `ranges`. Each range's results will be a nested array.
- */
-
-/**
- * @function
- * @name SpreadsheetInterface#update
- * @param {string} range The target range to update, such as a row range like `'1:1'` or a single-cell identifier like `'C2'`
- * @param {Array<Array>} values
- * @returns {Promise}
+ *
+ * @typedef {object} SpreadsheetInterface
+ * @property {(cellValues: Array<(string|number|boolean|null)>) => Promise<void>}
+ *   appendRow - Add a row after the last one, with these values
+ * @property {(cellIdentifier: string) => Promise<any>} getCell - Get the value of that
+ *   cell (often as a string). Example `cellIdentifier`: `'A1'`
+ * @property {(columnLetter: string) => Promise<Array<Array<any>>>} getColumn - Get an
+ *   array (column) of arrays (cell values in that row)
+ * @property {(ranges: Array<string>) => Promise<Array<Array<Array<any>>>>} getRanges -
+ *   Get a list of the results for each range, in the order specified in `ranges`. Each
+ *   range's results will be a nested array. Example `ranges`: `['B:C', '1:1']`
+ * @property {(range: string, values: Array<Array<any>>) => Promise<void>} update -
+ *   Update the target range, such as a row range like `'1:1'` or a single-cell
+ *   identifier like `'C2'`
  */
 
 /**
  * Google Sheet adapter
  *
  * @constructor
- * @param {string} serviceAccountKeyJson
+ * @param {{ client_email: string, private_key: string }} serviceAccountKey
  * @param {string} googleSheetId
- * @implements {SpreadsheetInterface}
  */
-function GoogleSheet(serviceAccountKeyJson, googleSheetId) {
-  const auth = new google.auth.GoogleAuth({
-    credentials: JSON.parse(serviceAccountKeyJson),
+function GoogleSheet(serviceAccountKey, googleSheetId) {
+  const googleAuth = new auth.JWT({
+    email: serviceAccountKey.client_email,
+    key: serviceAccountKey.private_key,
     scopes: ['https://www.googleapis.com/auth/spreadsheets'],
   })
-  const sheets = google.sheets({ version: 'v4', auth })
+  const sheets = googleSheets({ version: 'v4', auth: googleAuth })
 
   this.appendRow = async (cellValues) => {
     await sheets.spreadsheets.values.append({
       spreadsheetId: googleSheetId,
       range: 'A1',
       valueInputOption: 'USER_ENTERED',
-      resource: {
+      requestBody: {
         values: [cellValues],
       },
     })
@@ -170,7 +121,7 @@ function GoogleSheet(serviceAccountKeyJson, googleSheetId) {
       spreadsheetId: googleSheetId,
       range: range,
       valueInputOption: 'USER_ENTERED',
-      resource: {
+      requestBody: {
         values: values,
       },
     })
@@ -223,16 +174,27 @@ const getColumnLetter = (index) => {
 }
 
 /**
+ * Update the metric in any spreadsheet. Code should call updateMetricInGoogleSheet;
+ * the tests call this with a fake spreadsheet.
+ *
  * @param {string} sourceFileName
  * @param {string} runID
  * @param {boolean} wasDryRun
  * @param {string} recordType
  * @param {number} numberOfItems
  * @param {SpreadsheetInterface} spreadsheet
- * @param {string} eventId
+ * @param {string} [eventId] - Only needed when `runID` is `'NEW'`
  * @return {Promise<Object>}
  */
-const updateMetric = async (sourceFileName, runID, wasDryRun, recordType, numberOfItems, spreadsheet, eventId) => {
+const updateMetricInSpreadsheet = async (
+  sourceFileName,
+  runID,
+  wasDryRun,
+  recordType,
+  numberOfItems,
+  spreadsheet,
+  eventId,
+) => {
   if (!runID) {
     return { error: 'No Run ID was provided' }
   }
@@ -307,4 +269,4 @@ const updateMetric = async (sourceFileName, runID, wasDryRun, recordType, number
   }
 }
 
-export { calculateUniqueRunID, updateMetric }
+export { calculateUniqueRunID, updateMetricInGoogleSheet, updateMetricInSpreadsheet }
