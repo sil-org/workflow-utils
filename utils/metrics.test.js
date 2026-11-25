@@ -13,14 +13,13 @@ try {
   }
 }
 
-const { default: component, updateMetric, calculateUniqueRunID } = await import('./update_metric_in_google_sheet.js')
+const { updateMetricInGoogleSheet, updateMetricInSpreadsheet, calculateUniqueRunID } = await import('./metrics.js')
 
 /**
  * Mock spreadsheet adapter
  *
  * @constructor
  * @param {Array[]} initialData
- * @implements {SpreadsheetInterface}
  */
 function MockSpreadsheet(initialData = [[]]) {
   this.data = initialData // 2D array: this.data[row][col]
@@ -66,8 +65,8 @@ function MockSpreadsheet(initialData = [[]]) {
   }
 }
 
-describe(component.name, () => {
-  describe('updateMetric', () => {
+describe('Update Metric (Google Sheet)', () => {
+  describe('updateMetricInSpreadsheet', () => {
     it('should add a column if no column is found for that record type', async () => {
       const recordType = 'New Metric'
       const mockSheet = new MockSpreadsheet([
@@ -75,7 +74,7 @@ describe(component.name, () => {
         ['2026-05-20', 'test.csv', 'abcd1234', 'No'], // Existing Row
       ])
 
-      const response = await updateMetric('test.csv', 'abcd1234', false, recordType, 1, mockSheet)
+      const response = await updateMetricInSpreadsheet('test.csv', 'abcd1234', false, recordType, 1, mockSheet)
 
       assert.equal(response.error, undefined)
       assert.ok(
@@ -90,7 +89,7 @@ describe(component.name, () => {
 
     it('should report an error if not given a Run ID (nor told to generate a new one)', async () => {
       const mockSheet = new MockSpreadsheet()
-      const response = await updateMetric(
+      const response = await updateMetricInSpreadsheet(
         'test.csv',
         '', // runID
         false,
@@ -104,7 +103,7 @@ describe(component.name, () => {
 
     it('should report an error if given a Record Type when generating a new row', async () => {
       const mockSheet = new MockSpreadsheet()
-      const response = await updateMetric('test.csv', 'NEW', false, 'ICJE Lines', 1, mockSheet)
+      const response = await updateMetricInSpreadsheet('test.csv', 'NEW', false, 'ICJE Lines', 1, mockSheet)
 
       const errorMessage = String(response.error)
       assert.ok(
@@ -118,7 +117,7 @@ describe(component.name, () => {
         ['Date', 'File Name', 'Run ID', 'Dry Run', 'ICJE Lines'],
         ['2026-05-20', 'test.csv', 'abcd1234', 'No', ''],
       ])
-      const response = await updateMetric('test.csv', 'zzzzzzzz', false, 'ICJE Lines', 1, mockSheet)
+      const response = await updateMetricInSpreadsheet('test.csv', 'zzzzzzzz', false, 'ICJE Lines', 1, mockSheet)
 
       assert.ok(
         String(response.error).includes('No row found for'),
@@ -130,7 +129,7 @@ describe(component.name, () => {
       const mockSheet = new MockSpreadsheet([['Date', 'File Name', 'Run ID', 'Dry Run']])
       const exampleEventId = randomUUID()
 
-      const response = await updateMetric('test.csv', 'NEW', false, '', 1, mockSheet, exampleEventId)
+      const response = await updateMetricInSpreadsheet('test.csv', 'NEW', false, '', 1, mockSheet, exampleEventId)
 
       assert.equal(response.error, undefined)
       assert.ok(response.insertedNewRow)
@@ -146,7 +145,7 @@ describe(component.name, () => {
       const mockSheet = new MockSpreadsheet([['Date', 'File Name', 'Run ID', 'Dry Run']])
       const exampleEventId = randomUUID()
 
-      const response = await updateMetric('test.csv', 'NEW', true, '', 1, mockSheet, exampleEventId)
+      const response = await updateMetricInSpreadsheet('test.csv', 'NEW', true, '', 1, mockSheet, exampleEventId)
 
       assert.equal(response.error, undefined)
       assert.ok(response.insertedNewRow)
@@ -158,7 +157,7 @@ describe(component.name, () => {
       const mockSheet = new MockSpreadsheet([['Date', 'File Name', 'Run ID', 'Dry Run']])
       const exampleEventId = randomUUID()
 
-      const response = await updateMetric('test.csv', 'NEW', false, '', 1, mockSheet, exampleEventId)
+      const response = await updateMetricInSpreadsheet('test.csv', 'NEW', false, '', 1, mockSheet, exampleEventId)
 
       assert.equal(response.error, undefined)
       assert.ok(response.insertedNewRow)
@@ -173,7 +172,7 @@ describe(component.name, () => {
         ['2026-05-20', 'test.csv', existingEventId, 'No'],
       ])
 
-      const response = await updateMetric('test.csv', 'NEW', false, '', 1, mockSheet, existingEventId)
+      const response = await updateMetricInSpreadsheet('test.csv', 'NEW', false, '', 1, mockSheet, existingEventId)
 
       assert.equal(response.error, undefined)
       assert.ok(response.insertedNewRow)
@@ -190,7 +189,7 @@ describe(component.name, () => {
         ['2026-05-20', 'test.csv', 'abcd1234', 'No', '5'],
       ])
 
-      const response = await updateMetric('test.csv', 'abcd1234', false, 'ICJE Lines', 1, mockSheet)
+      const response = await updateMetricInSpreadsheet('test.csv', 'abcd1234', false, 'ICJE Lines', 1, mockSheet)
 
       assert.equal(response.error, undefined)
       assert.equal(response.insertedNewRow, false)
@@ -206,7 +205,7 @@ describe(component.name, () => {
         ['2026-05-20', 'test.csv', 'abcd1234', 'No', '10'],
       ])
 
-      const response = await updateMetric('test.csv', 'abcd1234', false, 'Invoice Lines', 3, mockSheet)
+      const response = await updateMetricInSpreadsheet('test.csv', 'abcd1234', false, 'Invoice Lines', 3, mockSheet)
 
       assert.equal(response.error, undefined)
       assert.equal(response.insertedNewRow, false)
@@ -216,11 +215,16 @@ describe(component.name, () => {
     })
   })
 
-  describe('run', () => {
+  describe('updateMetricInGoogleSheet', () => {
     it('should gracefully handle any Errors thrown', async () => {
-      component.google_service_account_key = 'NOT a valid JSON string, to trigger an error'
-
-      const response = await component.run()
+      const response = await updateMetricInGoogleSheet({
+        sourceFileName: 'test.csv',
+        runID: 'abcd1234',
+        wasDryRun: false,
+        recordType: 'Invoice Lines',
+        googleSheetId: 'some-sheet-id',
+        serviceAccountKey: null, // Missing, to trigger an error
+      })
 
       console.debug(response)
       assert.notEqual(response.error, undefined)
@@ -234,14 +238,15 @@ describe(component.name, () => {
         return
       }
 
-      component.run_id = 'abcd1234'
-      component.source_file_name = 'test.csv'
-      component.record_type = 'Invoice Lines'
-      component.number_of_items = 1
-      component.google_sheet_id = googleSheetId
-      component.google_service_account_key = googleServiceAccountKey
-
-      const response = await component.run()
+      const response = await updateMetricInGoogleSheet({
+        sourceFileName: 'test.csv',
+        runID: 'abcd1234',
+        wasDryRun: false,
+        recordType: 'Invoice Lines',
+        numberOfItems: 1,
+        googleSheetId,
+        serviceAccountKey: JSON.parse(googleServiceAccountKey),
+      })
       assert.equal(response.error, undefined)
       assert.ok(response.newCount > response.previousCount)
     })
