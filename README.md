@@ -10,6 +10,8 @@ The following categories of utilities are available under /utils:
   - lastDay
   - normalizeString
   - startsWith
+- `metrics`: Record metrics in a Google Sheet, such as how many records of each type a run processed.
+  - updateMetricInGoogleSheet
 - `netsuite`: NetSuite REST & SuiteQL helpers, including functions to execute SuiteQL queries.
   - getRecordPath
   - queryRecord
@@ -42,6 +44,10 @@ To manually run the tests...
 Note: If you also want to run the NetSuite integration tests, copy `.env.example` to
 `.env` and put the application credentials (e.g. to your NetSuite Sandbox) in the
 appropriate places in the `NETSUITE_CONFIG_DEV` value. Please remember to delete the `.env` file as soon as possible after you're finished.
+
+The metrics integration test likewise needs `TEST_GOOGLE_SERVICE_ACCOUNT_KEY` (the
+service account key's JSON) and `TEST_GOOGLE_SHEET_ID` (the ID of a test metrics sheet
+the service account can edit) in `.env`.
 
 ## Contributing
 
