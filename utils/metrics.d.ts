@@ -25,11 +25,63 @@ export type SpreadsheetInterface = {
     update: (range: string, values: Array<Array<any>>) => Promise<void>;
 };
 /**
+ * The outcome of updating a metric: either `error` (and maybe `stackTrace`), or the rest.
+ */
+export type MetricUpdateResult = {
+    /**
+     * Why the metric wasn't updated
+     */
+    error?: string;
+    /**
+     * Where the error happened, if it was thrown
+     */
+    stackTrace?: string;
+    /**
+     * `'Yes'` or `'No'`
+     */
+    dryRun?: string;
+    /**
+     * Whether a column was added for a new record type
+     */
+    insertedNewColumn?: boolean;
+    /**
+     * Whether a row was added for a new Run ID
+     */
+    insertedNewRow?: boolean;
+    /**
+     * The count before this update
+     */
+    previousCount?: number;
+    /**
+     * The count after this update
+     */
+    newCount?: number;
+    /**
+     * The Run ID used, e.g. the new one when given `'NEW'`
+     */
+    runID?: string;
+    warnings?: string[];
+};
+/**
  * @param {string} givenRunID
  * @param {string[]} existingRunIDs
  * @return {string}
  */
 export function calculateUniqueRunID(givenRunID: string, existingRunIDs: string[]): string;
+/**
+ * The outcome of updating a metric: either `error` (and maybe `stackTrace`), or the rest.
+ *
+ * @typedef {object} MetricUpdateResult
+ * @property {string} [error] Why the metric wasn't updated
+ * @property {string} [stackTrace] Where the error happened, if it was thrown
+ * @property {string} [dryRun] `'Yes'` or `'No'`
+ * @property {boolean} [insertedNewColumn] Whether a column was added for a new record type
+ * @property {boolean} [insertedNewRow] Whether a row was added for a new Run ID
+ * @property {number} [previousCount] The count before this update
+ * @property {number} [newCount] The count after this update
+ * @property {string} [runID] The Run ID used, e.g. the new one when given `'NEW'`
+ * @property {string[]} [warnings]
+ */
 /**
  * Add a new row OR increment the counter for how many records of a given type were
  * processed, in a Google Sheet. Returns any error as `{ error, stackTrace }` instead
@@ -53,7 +105,7 @@ export function calculateUniqueRunID(givenRunID: string, existingRunIDs: string[
  *   The Google Service Account Key, parsed from its JSON once at startup
  * @param {string} [options.executionId] - The Dispatcher's Kestra execution ID, used for
  *   calculating a Run ID when adding a new row
- * @returns {Promise<object>}
+ * @returns {Promise<MetricUpdateResult>}
  */
 export function updateMetricInGoogleSheet({ sourceFileName, runID, wasDryRun, recordType, numberOfItems, googleSheetId, serviceAccountKey, executionId, }: {
     sourceFileName: string;
@@ -67,7 +119,7 @@ export function updateMetricInGoogleSheet({ sourceFileName, runID, wasDryRun, re
         private_key: string;
     };
     executionId?: string;
-}): Promise<object>;
+}): Promise<MetricUpdateResult>;
 /**
  * Update the metric in any spreadsheet. Code should call updateMetricInGoogleSheet;
  * the tests call this with a fake spreadsheet.
@@ -79,6 +131,6 @@ export function updateMetricInGoogleSheet({ sourceFileName, runID, wasDryRun, re
  * @param {number} numberOfItems
  * @param {SpreadsheetInterface} spreadsheet
  * @param {string} [eventId] - Only needed when `runID` is `'NEW'`
- * @return {Promise<Object>}
+ * @return {Promise<MetricUpdateResult>}
  */
-export function updateMetricInSpreadsheet(sourceFileName: string, runID: string, wasDryRun: boolean, recordType: string, numberOfItems: number, spreadsheet: SpreadsheetInterface, eventId?: string): Promise<any>;
+export function updateMetricInSpreadsheet(sourceFileName: string, runID: string, wasDryRun: boolean, recordType: string, numberOfItems: number, spreadsheet: SpreadsheetInterface, eventId?: string): Promise<MetricUpdateResult>;

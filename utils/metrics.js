@@ -2,6 +2,21 @@
 import { auth, sheets as googleSheets } from '@googleapis/sheets'
 
 /**
+ * The outcome of updating a metric: either `error` (and maybe `stackTrace`), or the rest.
+ *
+ * @typedef {object} MetricUpdateResult
+ * @property {string} [error] Why the metric wasn't updated
+ * @property {string} [stackTrace] Where the error happened, if it was thrown
+ * @property {string} [dryRun] `'Yes'` or `'No'`
+ * @property {boolean} [insertedNewColumn] Whether a column was added for a new record type
+ * @property {boolean} [insertedNewRow] Whether a row was added for a new Run ID
+ * @property {number} [previousCount] The count before this update
+ * @property {number} [newCount] The count after this update
+ * @property {string} [runID] The Run ID used, e.g. the new one when given `'NEW'`
+ * @property {string[]} [warnings]
+ */
+
+/**
  * Add a new row OR increment the counter for how many records of a given type were
  * processed, in a Google Sheet. Returns any error as `{ error, stackTrace }` instead
  * of throwing it.
@@ -24,7 +39,7 @@ import { auth, sheets as googleSheets } from '@googleapis/sheets'
  *   The Google Service Account Key, parsed from its JSON once at startup
  * @param {string} [options.executionId] - The Dispatcher's Kestra execution ID, used for
  *   calculating a Run ID when adding a new row
- * @returns {Promise<object>}
+ * @returns {Promise<MetricUpdateResult>}
  */
 const updateMetricInGoogleSheet = async ({
   sourceFileName,
@@ -183,7 +198,7 @@ const getColumnLetter = (index) => {
  * @param {number} numberOfItems
  * @param {SpreadsheetInterface} spreadsheet
  * @param {string} [eventId] - Only needed when `runID` is `'NEW'`
- * @return {Promise<Object>}
+ * @return {Promise<MetricUpdateResult>}
  */
 const updateMetricInSpreadsheet = async (
   sourceFileName,
