@@ -60,18 +60,17 @@ const updateMetricInGoogleSheet = async ({
  * Interface for interacting with spreadsheets
  *
  * @typedef {object} SpreadsheetInterface
- * @property {(cellValues: Array<(string|number|boolean|null)>) => Promise<void>}
- *   appendRow - Add a row after the last one, with these values
- * @property {(cellIdentifier: string) => Promise<any>} getCell - Get the value of that
- *   cell (often as a string). Example `cellIdentifier`: `'A1'`
- * @property {(columnLetter: string) => Promise<Array<Array<any>>>} getColumn - Get an
- *   array (column) of arrays (cell values in that row)
- * @property {(ranges: Array<string>) => Promise<Array<Array<Array<any>>>>} getRanges -
- *   Get a list of the results for each range, in the order specified in `ranges`. Each
- *   range's results will be a nested array. Example `ranges`: `['B:C', '1:1']`
- * @property {(range: string, values: Array<Array<any>>) => Promise<void>} update -
- *   Update the target range, such as a row range like `'1:1'` or a single-cell
- *   identifier like `'C2'`
+ * @property {(cellValues: Array<(string|number|boolean|null)>) => Promise<void>} appendRow
+ *   Add a row after the last one, with these values
+ * @property {(cellIdentifier: string) => Promise<any>} getCell
+ *   Get the value of that cell (often as a string). Example `cellIdentifier`: `'A1'`
+ * @property {(columnLetter: string) => Promise<Array<Array<any>>>} getColumn
+ *   Get an array (column) of arrays (cell values in that row)
+ * @property {(ranges: Array<string>) => Promise<Array<Array<Array<any>>>>} getRanges
+ *   Get a list of the results for each range, in the order specified in `ranges`. Each range's results will be a
+ *   nested array. Example `ranges`: `['B:C', '1:1']`
+ * @property {(range: string, values: Array<Array<any>>) => Promise<void>} update
+ *   Update the target range, such as a row range like `'1:1'` or a single-cell identifier like `'C2'`
  */
 
 /**

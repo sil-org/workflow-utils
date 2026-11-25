@@ -3,29 +3,24 @@
  */
 export type SpreadsheetInterface = {
     /**
-     * - Add a row after the last one, with these values
+     *   Add a row after the last one, with these values
      */
     appendRow: (cellValues: Array<(string | number | boolean | null)>) => Promise<void>;
     /**
-     * - Get the value of that
-     * cell (often as a string). Example `cellIdentifier`: `'A1'`
+     *   Get the value of that cell (often as a string). Example `cellIdentifier`: `'A1'`
      */
     getCell: (cellIdentifier: string) => Promise<any>;
     /**
-     * - Get an
-     * array (column) of arrays (cell values in that row)
+     *   Get an array (column) of arrays (cell values in that row)
      */
     getColumn: (columnLetter: string) => Promise<Array<Array<any>>>;
     /**
-     * -
-     * Get a list of the results for each range, in the order specified in `ranges`. Each
-     * range's results will be a nested array. Example `ranges`: `['B:C', '1:1']`
+     *   Get a list of the results for each range, in the order specified in `ranges`. Each range's results will be a
+     *   nested array. Example `ranges`: `['B:C', '1:1']`
      */
     getRanges: (ranges: Array<string>) => Promise<Array<Array<Array<any>>>>;
     /**
-     * -
-     * Update the target range, such as a row range like `'1:1'` or a single-cell
-     * identifier like `'C2'`
+     *   Update the target range, such as a row range like `'1:1'` or a single-cell identifier like `'C2'`
      */
     update: (range: string, values: Array<Array<any>>) => Promise<void>;
 };
